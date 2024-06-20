@@ -1,10 +1,9 @@
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { SoftwaresService } from "../../services/softwares/softwares.service";
 import { Store } from "@ngrx/store";
 import { fetchFunctionnalities, fetchFunctionnalitiesSuccess, functionnalitiesFailure } from "./functionnalities.actions"
 import { catchError, map, mergeMap, of, tap } from "rxjs";
 import { Injectable } from "@angular/core";
-import { FunctionnalitiesService } from "../../services/functionnalities/functionnalities.service";
+import { FunctionnalitiesService } from "../../shared/services/functionnalities/functionnalities.service";
 
 @Injectable()
 export class FunctionnalityEffects {

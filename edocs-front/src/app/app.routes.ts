@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { MainPage } from './pages/main-container/main.page';
+import { MainPage } from './features/home/main.page';
 
 export const routes: Routes = [{
     path: '',

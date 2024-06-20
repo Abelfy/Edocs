@@ -1,9 +1,9 @@
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { VersionsService } from "../../services/versions/versions.service";
 import { Store } from "@ngrx/store";
 import { fetchVersions, fetchVersionsSuccess, versionsFailure } from "./versions.actions"
 import { catchError, map, mergeMap, of } from "rxjs";
 import { Injectable } from "@angular/core";
+import { VersionsService } from "../../shared/services/versions/versions.service";
 
 @Injectable()
 export class VersionEffects {
