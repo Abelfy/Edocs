@@ -6,7 +6,10 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGen
 
 @Entity()
 export class Risk extends AbstractEntity {
-
+    @Column({
+        unique: true
+    })
+    jiraID: number;
     @Column()
     description: string;
 

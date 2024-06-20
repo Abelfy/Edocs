@@ -11,6 +11,7 @@ import { RisksModule } from './softwares/versions/functionnalities/risks/risks.m
 import { ItemsModule } from './softwares/versions/items/items.module';
 import { UnitsModule } from './softwares/versions/items/units/units.module';
 import { JiraModule } from './jira/jira.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { JiraModule } from './jira/jira.module';
     SoftwaresModule,
     AuthModule,
     JiraModule,
+    ReportModule,
 
   ],
   controllers: [],

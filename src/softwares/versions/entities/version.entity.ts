@@ -8,7 +8,9 @@ import { AbstractEntity } from "src/core/entity/abstract.entity";
 
 @Entity()
 export class Version extends AbstractEntity {
-    @Column({})
+    @Column({
+        unique: true
+    })
     jiraID: number;
 
     @Column({})

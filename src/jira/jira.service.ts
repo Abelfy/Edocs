@@ -4,7 +4,7 @@ import { UpdateJiraDto } from './dto/update-jira.dto';
 import { Version3Client } from 'jira.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Version } from 'src/softwares/versions/entities/version.entity';
-import { Repository, Transaction } from 'typeorm';
+import { Equal, Repository, Transaction } from 'typeorm';
 import { Software } from 'src/softwares/entities/software.entity';
 import { Functionnality } from 'src/softwares/versions/functionnalities/entities/functionnality.entity';
 
@@ -56,43 +56,18 @@ export class JiraService {
       let issues = [];
       for (const projet of projets.values) {
         const projetDetails = await this.jiraClient.projects.getProject({ projectIdOrKey: projet.id });
-        const versions = [];
+        let software = await this.softwareRepository.findOne({ where: { jiraID: +projetDetails.id } });
+        const versions = await this.createVersions(projet, projetDetails.versions);
         for (const version of projetDetails.versions) {
-
-          const regex = new RegExp('^([0-9]|[1-9][0-9]*)\\.([0-9]|[1-9][0-9]*)\\.([0-9]|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$');
-          if (!regex.test(version.name)) {
-            throw new Error('Invalid version name: ' + version.name);
-          }
-
-          const [major, minor, patch] = version.name.split('.').map(Number);
-
-
-          const functionalities = await this.createFunctionalitiesFromEpics(projet, version);
-          this.logger.debug(JSON.stringify(functionalities))
-
+          await this.createFunctionalitiesFromEpics(projet, version);
           issues = (await this.jiraClient.issueSearch.searchForIssuesUsingJql({
             jql: `project = '${projet.key}' AND fixVersion = '${version.name}'`,
             fields: []
           })).issues;
-
-          versions.push({
-            jiraID: version.id,
-            major, minor, patch,
-            description: 'Version ' + version.name,
-            functionnalities: functionalities,
-            items: issues.map(issue => {
-              return {
-                description: issue.fields.summary,
-
-              }
-            })
-          });
-
         }
-        const software = await this.softwareRepository.save({ name: projet.name,jiraID: +projet.id, versions });
-        softwares.push(software);
+        softwares.push(await this.softwareRepository.save({...software,jiraID: +projetDetails.id,name: projetDetails.name, versions}));
       }
-      return { softwares, issues };
+      return softwares;
     } catch (error) {
       this.logger.error(error);
       throw error
@@ -100,6 +75,28 @@ export class JiraService {
 
   }
 
+  private validateVersionName(version) {
+    const regex = new RegExp('^([0-9]|[1-9][0-9]*)\\.([0-9]|[1-9][0-9]*)\\.([0-9]|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$');
+    if (!regex.test(version.name)) {
+      throw new Error('Invalid version name: ' + version.name);
+    }
+  }
+
+  private  createVersions(projet, versions) {
+    const versionsToCreate = [];
+    for (const version of versions) {
+      this.validateVersionName(version);
+      const [major, minor, patch] = version.name.split('.').map(Number);
+
+      versionsToCreate.push({
+        jiraID: version.id,
+        major, minor, patch,
+        description: 'Version ' + version.name,
+      });
+    }
+
+    return this.versionRepository.save(versionsToCreate);
+  }
   private async createFunctionalitiesFromEpics(projet, version) {
     const epics = (await this.jiraClient.issueSearch.searchForIssuesUsingJql({
       jql: `project = '${projet.key}' AND type = 'Epic'`,
@@ -110,8 +107,10 @@ export class JiraService {
     for (const epic of epics) {
       if(!epic.fields.description) throw new Error('Epic description is missing');
       functionalitiesToCreate.push({
+        jiraID: +epic.id,
         description: epic.fields.description,
         label : epic.fields.summary,
+        version: await this.versionRepository.findOne({where: {id : version.id}})
       });
     }
     return await this.functionnalitiesRepository.save(functionalitiesToCreate);

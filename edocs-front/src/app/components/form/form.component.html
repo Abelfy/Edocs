@@ -1,0 +1,30 @@
+<div class="container">
+
+  @if(softwares$ | async; as softwares){
+  <mat-form-field>
+    <mat-label>Softwares :</mat-label>
+    <mat-select (selectionChange)="fetchVersions()">
+      @for (software of softwares; track software.id) {
+      <mat-option [value]="software">{{software.name}}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  }
+
+  @if( versions$ | async; as versions){
+    <mat-form-field>
+      <mat-label>Versions :</mat-label>
+      <mat-select (selectionChange)="fetchFunctionnalities()" [disabled]="!(versionsHasLoaded$ | async)">
+        @for (version of versions; track version.id) {
+        <mat-option [value]="version">{{version.description}}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  
+  @if(functionnalitiesHasLoaded$ | async) {
+    @if( functionnalities$ | async; as functionnalities){
+      <edocs-form-functionnalities-list [functionnalities]="functionnalities"></edocs-form-functionnalities-list>
+    }
+  }
+</div>

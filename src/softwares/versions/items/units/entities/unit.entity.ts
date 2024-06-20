@@ -5,7 +5,10 @@ import { AbstractEntity } from "src/core/entity/abstract.entity";
 
 @Entity()
 export class Unit extends AbstractEntity {
-
+    @Column({
+        unique: true
+    })
+    jiraID: number;
     @Column()
     label: string;
 
