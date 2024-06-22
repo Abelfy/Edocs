@@ -15,12 +15,14 @@ export class UnitsController {
   }
 
   @Get()
-  findAll() {
-    return this.unitsService.findAll();
+  findAll( @Param('itemId') itemId: string) {
+    return this.unitsService.findAll(+itemId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param('itemId') itemId: string,
+    @Param('id') id: string) {
     return this.unitsService.findOne(+id);
   }
 

@@ -7,28 +7,8 @@ import { UpdateJiraDto } from './dto/update-jira.dto';
 export class JiraController {
   constructor(private readonly jiraService: JiraService) {}
 
-  @Post()
-  create(@Body() createJiraDto: CreateJiraDto) {
-    return this.jiraService.create(createJiraDto);
-  }
-
   @Get()
   findAll() {
-    return this.jiraService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.jiraService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateJiraDto: UpdateJiraDto) {
-    return this.jiraService.update(+id, updateJiraDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.jiraService.remove(+id);
+    return this.jiraService.importFromJira();
   }
 }

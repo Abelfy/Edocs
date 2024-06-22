@@ -7,15 +7,26 @@ import { RouterModule } from '@nestjs/core';
 import { VersionsModule } from './softwares/versions/versions.module';
 import { AuthModule } from './auth/auth.module';
 import { FunctionnalitiesModule } from './softwares/versions/functionnalities/functionnalities.module';
-import { RisksModule } from './softwares/versions/functionnalities/risks/risks.module';
 import { ItemsModule } from './softwares/versions/items/items.module';
 import { UnitsModule } from './softwares/versions/items/units/units.module';
 import { JiraModule } from './jira/jira.module';
 import { ReportModule } from './report/report.module';
-
+import { RisksModule } from './softwares/versions/risks/risks.module';
+import * as Joi from 'joi';
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true , validationSchema : Joi.object({ 
+      JWT_SECRET: Joi.string().required(),
+      JWT_EXPIRATION: Joi.string().required(),
+      POSTGRES_HOST: Joi.string().required(),
+      POSTGRES_PORT: Joi.number().required(),
+      POSTGRES_USER: Joi.string().required(),
+      POSTGRES_PASSWORD: Joi.string().required(),
+      POSTGRES_DB: Joi.string().required(),
+      JIRA_HOST: Joi.string().required(),
+      JIRA_ACCOUNT_EMAIL: Joi.string().required(),
+      JIRA_API_TOKEN: Joi.string().required(),
+    })}),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -36,20 +47,19 @@ import { ReportModule } from './report/report.module';
         path: '/softwares',
         module: SoftwaresModule,
         children: [{
-          path: '/:id/versions',
+          path: '/:softwareId/versions',
           module: VersionsModule,
           children: [{
-            path: '/:id/functionnalities',
-            module: FunctionnalitiesModule,
-            children: [{
-              path: '/:id/risks',
-              module: RisksModule,
-            }]
+            path: '/:versionId/functionnalities',
+            module: FunctionnalitiesModule
           }, {
-            path: '/:id/items',
+            path: '/:versionId/risks',
+            module: RisksModule,
+          }, {
+            path: '/:versionId/items',
             module: ItemsModule,
             children: [{
-              path: '/:id/units',
+              path: '/:itemId/units',
               module: UnitsModule,
             }]
           }],

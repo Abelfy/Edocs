@@ -7,6 +7,9 @@ import { Version } from 'src/softwares/versions/entities/version.entity';
 import { Equal, Repository, Transaction } from 'typeorm';
 import { Software } from 'src/softwares/entities/software.entity';
 import { Functionnality } from 'src/softwares/versions/functionnalities/entities/functionnality.entity';
+import { ConfigService } from '@nestjs/config';
+import { Item } from 'src/softwares/versions/items/entities/item.entity';
+import { Unit } from 'src/softwares/versions/items/units/entities/unit.entity';
 
 @Injectable()
 export class JiraService {
@@ -17,39 +20,28 @@ export class JiraService {
     @InjectRepository(Version) private versionRepository: Repository<Version>,
     @InjectRepository(Software) private softwareRepository: Repository<Software>,
     @InjectRepository(Functionnality) private functionnalitiesRepository: Repository<Functionnality>,
+    @InjectRepository(Item) private itemsRepository: Repository<Item>,
+    @InjectRepository(Unit) private unitsRepository: Repository<Unit>,
+    private readonly configService: ConfigService,
   ) {
     this.jiraClient = new Version3Client({
-      host: 'https://kuriann.atlassian.net',
-      authentication: {
+      host: configService.getOrThrow('JIRA_HOST'),
+      authentication : {
         basic: {
-          email: 'adrien.belfy@gmail.com',
-          apiToken: 'ATATT3xFfGF0d0xS9Rj9F2mjqQITtmEL0qYnoUMZjXDyDAkS1a7OaKm1r3yRLV1Z2GDmbVcAjeAn9Jqi7-9-1UQ3lfjw9by1ts8vR0o9vSk6fcYJS1XQPTCpLrbw6Yh2k7LV3F2VCw1ZpLgC9hwTd5fOy9HarpWpaIpTlGA2RL7tQwqc0pHiG8A=BC807C3F',
+          email: configService.getOrThrow('JIRA_ACCOUNT_EMAIL'),
+          apiToken: configService.getOrThrow('JIRA_API_TOKEN'),
         },
       }
     })
   }
 
-  create(createJiraDto: CreateJiraDto) {
-    return 'This action adds a new jira';
-  }
-  /**
-   *
-   *
-   * @return {*} 
-   * @memberof JiraService
-  /**
-   *
-   *
-   * @return {*} 
-   * @memberof JiraService
   /**
    *
    *
    * @return {*} 
    * @memberof JiraService
    */
-  
-  async findAll() {    
+  async importFromJira() {    
     try {
       const projets = await this.jiraClient.projects.searchProjects({});
       const softwares = [];
@@ -57,13 +49,13 @@ export class JiraService {
       for (const projet of projets.values) {
         const projetDetails = await this.jiraClient.projects.getProject({ projectIdOrKey: projet.id });
         let software = await this.softwareRepository.findOne({ where: { jiraID: +projetDetails.id } });
+        if(!software){
+          software = await this.softwareRepository.save({jiraID: +projetDetails.id,name: projetDetails.name});
+        }
         const versions = await this.createVersions(projet, projetDetails.versions);
         for (const version of projetDetails.versions) {
           await this.createFunctionalitiesFromEpics(projet, version);
-          issues = (await this.jiraClient.issueSearch.searchForIssuesUsingJql({
-            jql: `project = '${projet.key}' AND fixVersion = '${version.name}'`,
-            fields: []
-          })).issues;
+          await this.createItems(projet, version);
         }
         softwares.push(await this.softwareRepository.save({...software,jiraID: +projetDetails.id,name: projetDetails.name, versions}));
       }
@@ -71,7 +63,7 @@ export class JiraService {
     } catch (error) {
       this.logger.error(error);
       throw error
-    }
+    } 
 
   }
 
@@ -87,12 +79,14 @@ export class JiraService {
     for (const version of versions) {
       this.validateVersionName(version);
       const [major, minor, patch] = version.name.split('.').map(Number);
-
-      versionsToCreate.push({
-        jiraID: version.id,
-        major, minor, patch,
-        description: 'Version ' + version.name,
-      });
+      const existingVersion = this.versionRepository.findOne({where: {jiraID: version.id}});
+      if(!existingVersion){
+        versionsToCreate.push({
+          jiraID: version.id,
+          major, minor, patch,
+          description: 'Version ' + version.name,
+        });
+      }
     }
 
     return this.versionRepository.save(versionsToCreate);
@@ -106,25 +100,43 @@ export class JiraService {
     const functionalitiesToCreate = [];
     for (const epic of epics) {
       if(!epic.fields.description) throw new Error('Epic description is missing');
-      functionalitiesToCreate.push({
-        jiraID: +epic.id,
-        description: epic.fields.description,
-        label : epic.fields.summary,
-        version: await this.versionRepository.findOne({where: {id : version.id}})
-      });
+
+      const existingFunctionnality = await this.functionnalitiesRepository.findOne({where: {jiraID: +epic.id}});
+      if(!existingFunctionnality){
+        functionalitiesToCreate.push({
+          jiraID: +epic.id,
+          description: JSON.stringify(epic.fields.description),
+          label : epic.fields.summary,
+          version: await this.versionRepository.findOne({where: {id : version.id}})
+        });
+      }
     }
     return await this.functionnalitiesRepository.save(functionalitiesToCreate);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} jira`;
-  }
-
-  update(id: number, updateJiraDto: UpdateJiraDto) {
-    return `This action updates a #${id} jira`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} jira`;
+  private async createItems(projet, version) {
+    const issues = (await this.jiraClient.issueSearch.searchForIssuesUsingJql({
+      jql: `project = '${projet.key}' AND fixVersion = '${version.name}' AND type = 'Story'`,
+      fields: []
+    })).issues;
+    for (const issue of issues) {
+      if(!issue.fields.description) throw new Error('Issue description is missing');
+      const existingItems = await this.itemsRepository.findOne({where: {jiraID: +issue.id}});
+      if(!existingItems){
+        await this.itemsRepository.save({
+          jiraID: +issue.id,
+          label: issue.fields.summary,
+          description : JSON.stringify(issue.fields.description),
+          units: issue.fields.subtasks.map(subtask => {
+            return {
+              label: subtask.fields.summary,
+              description: JSON.stringify(subtask.fields.description),
+              jiraID: +subtask.id,
+            }
+          })
+        });
+      }
+    }
+    return issues;
   }
 }

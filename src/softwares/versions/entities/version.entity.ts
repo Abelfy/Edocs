@@ -3,7 +3,7 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGen
 import { Functionnality } from "../functionnalities/entities/functionnality.entity";
 import { Item } from "../items/entities/item.entity";
 import { Tracability } from "./tracability.entity";
-import { Risk } from "../functionnalities/risks/entities/risk.entity";
+import { Risk } from "../risks/entities/risk.entity";
 import { AbstractEntity } from "src/core/entity/abstract.entity";
 
 @Entity()

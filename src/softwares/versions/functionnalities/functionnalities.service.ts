@@ -11,22 +11,22 @@ export class FunctionnalitiesService {
   constructor(@InjectRepository(Functionnality)  private functionnalityRepository: Repository<Functionnality>) {}
 
   create(createFunctionnalityDto: CreateFunctionnalityDto) {
-    return 'This action adds a new functionnality';
+    return this.functionnalityRepository.save(createFunctionnalityDto);
   }
 
-  findAll() {
-    return this.functionnalityRepository.find();
+  findAll(versionId : number) {
+    return this.functionnalityRepository.find({where: {version: { id:versionId}}});
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} functionnality`;
+    return this.functionnalityRepository.findOneBy({id});
   }
 
   update(id: number, updateFunctionnalityDto: UpdateFunctionnalityDto) {
-    return `This action updates a #${id} functionnality`;
+    return this.functionnalityRepository.update({id},updateFunctionnalityDto);
   }
 
   remove(id: number) {
-    return `This action removes a #${id} functionnality`;
+    return this.functionnalityRepository.delete(id);
   }
 }

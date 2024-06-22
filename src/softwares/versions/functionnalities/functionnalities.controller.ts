@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { FunctionnalitiesService } from './functionnalities.service';
 import { CreateFunctionnalityDto } from './dto/create-functionnality.dto';
 import { UpdateFunctionnalityDto } from './dto/update-functionnality.dto';
@@ -15,8 +15,8 @@ export class FunctionnalitiesController {
   }
 
   @Get()
-  findAll() {
-    return this.functionnalitiesService.findAll();
+  findAll(@Param('versionId',ParseIntPipe) versionId: number){
+    return this.functionnalitiesService.findAll(versionId);
   }
 
   @Get(':id')

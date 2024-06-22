@@ -6,9 +6,10 @@ import { Item } from 'src/softwares/versions/items/entities/item.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Software } from 'src/softwares/entities/software.entity';
 import { Functionnality } from 'src/softwares/versions/functionnalities/entities/functionnality.entity';
+import { Unit } from 'src/softwares/versions/items/units/entities/unit.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Version, Item, Software, Functionnality])],
+  imports: [TypeOrmModule.forFeature([Version, Item, Software, Functionnality,Unit])],
   controllers: [JiraController],
   providers: [JiraService],
 })

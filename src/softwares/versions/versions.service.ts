@@ -16,10 +16,8 @@ export class VersionsService {
     return this.versionRepository.save(createVersionDto);
   }
 
-  findAll() {
-    return this.versionRepository.find({
-      relations: ['functionnalities', 'items']
-    });
+  findAll(softwareId : number) {
+    return this.versionRepository.find({where: {software: { id:softwareId}}});
   }
 
   findOne(id: number) {

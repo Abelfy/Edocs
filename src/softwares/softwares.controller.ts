@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { SoftwaresService } from './softwares.service';
 import { CreateSoftwareDto } from './dto/create-software.dto';
 import { UpdateSoftwareDto } from './dto/update-software.dto';
 import { ApiTags } from '@nestjs/swagger';
+import JwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('softwares')
 @Controller('')
@@ -14,6 +15,7 @@ export class SoftwaresController {
     return this.softwaresService.create(createSoftwareDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.softwaresService.findAll();

@@ -17,13 +17,10 @@ export class SoftwaresService {
   }
 
   findAll() {
-    return this.softwareRepository.find({
-      relations: ['versions', 'versions.functionnalities', 'versions.items', 'versions.items.units']
-    });
+    return this.softwareRepository.find();
   }
 
   findOne(id: number) : Promise<Software | null>{
-    console.log(id);
     return this.softwareRepository.findOneBy({
         id : Equal(id)
       });

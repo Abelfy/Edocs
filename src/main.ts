@@ -1,7 +1,8 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   app.enableCors();
   
-  await app.listen(3000,()=>  logger.log('Server is running on http://localhost:3000'));
+  app.use(cookieParser());
+  app.useGlobalPipes(new ValidationPipe());
+
+  await app.listen(3000,()=>  logger.log(`Server is running on http://localhost:3000`));
 }
 bootstrap();

@@ -9,6 +9,7 @@ export class Item  extends AbstractEntity {
         unique: true
     })
     jiraID: number;
+    
     @Column()
     label: string;
 
