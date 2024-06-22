@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
@@ -13,6 +13,7 @@ import { JiraModule } from './jira/jira.module';
 import { ReportModule } from './report/report.module';
 import { RisksModule } from './softwares/versions/risks/risks.module';
 import * as Joi from 'joi';
+import { AppLoggerMiddleware } from './core/middlewares/request-logger.middleware';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true , validationSchema : Joi.object({ 
@@ -75,6 +76,9 @@ import * as Joi from 'joi';
   controllers: [],
   providers: [],
 })
-export class AppModule {
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AppLoggerMiddleware).forRoutes('*');
+  }
 
 }
